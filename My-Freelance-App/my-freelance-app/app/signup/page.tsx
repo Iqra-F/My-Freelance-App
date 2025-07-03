@@ -1,27 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post('/api/auth/signup', {
-        fullName,
-        email,
-        password,
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, password }),
+        credentials: 'include' // Important for cookies
       });
 
-      setMessage(res.data.message);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Signup failed');
+
+      
+      toast.success('Signup successful!');
+      router.push('/dashboard');
     } catch (err: any) {
-      setMessage(err.response?.data?.message || 'Signup failed!');
+      toast.error(` ${err.message}`);
     }
   };
 
@@ -67,9 +74,7 @@ export default function SignupPage() {
           Sign Up
         </button>
 
-        {message && (
-          <p className="text-sm text-center text-gray-600 mt-2">{message}</p>
-        )}
+       
       </form>
     </div>
   );

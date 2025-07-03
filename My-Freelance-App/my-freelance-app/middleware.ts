@@ -3,12 +3,26 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // You can add logic here for protected routes
-  console.log('Middleware executed');
+  const token = request.cookies.get('token')?.value;
+
+  const protectedPaths = ['/dashboard', '/profile'];
+  const currentPath = request.nextUrl.pathname;
+
+  const isProtected = protectedPaths.some((path) =>
+    currentPath.startsWith(path)
+  );
+
+  if (isProtected && !token) {
+    console.log('🚫 No token found — redirecting to login');
+
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('message', 'unauthorized');
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 
-// Optional: define matcher for routes to apply middleware on
 export const config = {
-  matcher: ['/dashboard/:path*', '/profile/:path*'], // example protected paths
+  matcher: ['/dashboard/:path*', '/profile/:path*'],
 };

@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
-  const [message, setMessage] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -12,24 +15,31 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
+        credentials: 'include'
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      setMessage('✅ Login successful');
-      console.log('User data:', data.user);
+      toast.success('Login successful');
+      router.push('/dashboard');
     } catch (err: any) {
-      setMessage(`❌ ${err.message}`);
+      toast.error(` ${err.message}`);
     }
   };
+
+  useEffect(() => {
+    const msg = searchParams.get('message');
+    if (msg === 'unauthorized') {
+      toast.error('Please log in to access that page.');
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -63,7 +73,6 @@ export default function LoginPage() {
           Login
         </button>
 
-        {message && <p className="text-center text-sm">{message}</p>}
       </form>
     </div>
   );

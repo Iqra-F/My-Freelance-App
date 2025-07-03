@@ -1,13 +1,13 @@
-// app/api/auth/signup/route.ts
 import { auth, db } from '@/app/lib/firebaseAdmin';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createAuthResponse } from '@/app/lib/setAuthCookie';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { email, password, fullName } = body;
 
   if (!email || !password || !fullName) {
-    return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    return new Response(JSON.stringify({ message: 'Missing required fields' }), { status: 400 });
   }
 
   try {
@@ -25,18 +25,36 @@ export async function POST(req: NextRequest) {
       role: 'candidate',
     });
 
-    return NextResponse.json(
+    // Auto-login after signup
+    const loginRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_API_KEY}`,
       {
-        message: 'User created successfully',
-        user: {
-          uid: userRecord.uid,
-          email: userRecord.email,
-          fullName,
-        },
-      },
-      { status: 201 }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      }
     );
+
+    const loginData = await loginRes.json();
+
+    if (!loginRes.ok) {
+      return new Response(
+        JSON.stringify({ message: loginData.error?.message || 'Login after signup failed' }),
+        { status: 500 }
+      );
+    }
+
+    return createAuthResponse(loginData.idToken, {
+      message: 'User created and logged in successfully',
+      user: {
+        uid: userRecord.uid,
+        email: userRecord.email,
+        fullName,
+      },
+    });
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || 'Signup failed' }, { status: 500 });
+    return new Response(JSON.stringify({ message: error.message || 'Signup failed' }), {
+      status: 500,
+    });
   }
 }
