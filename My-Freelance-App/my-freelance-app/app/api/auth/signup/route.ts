@@ -1,7 +1,7 @@
 import { auth, db } from '@/app/lib/firebaseAdmin';
 import { NextRequest } from 'next/server';
 import { createAuthResponse } from '@/app/lib/setAuthCookie';
-
+import { sendWelcomeEmail } from '@/app/lib/mail';
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { email, password, fullName, role } = body;
@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+await sendWelcomeEmail(userRecord.email!, fullName);
     return createAuthResponse(loginData.idToken, {
       message: 'User created and logged in successfully',
       user: {

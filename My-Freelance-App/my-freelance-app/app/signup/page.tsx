@@ -26,6 +26,7 @@ export default function SignupPage() {
       if (!res.ok) throw new Error(data.message || 'Signup failed');
 
       toast.success('Signup successful!');
+      toast.success('Welcome email sent to your inbox.');
       router.push('/dashboard');
     } catch (err: any) {
       toast.error(`${err.message}`);
