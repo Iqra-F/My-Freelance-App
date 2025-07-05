@@ -1,5 +1,4 @@
-// app/api/me/route.ts
-import { auth } from '@/app/lib/firebaseAdmin';
+import { auth, db } from '@/app/lib/firebaseAdmin';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -13,15 +12,21 @@ export async function GET() {
   try {
     const decoded = await auth.verifyIdToken(token);
     
+    // ⬇️ Fetch full user record from Firestore
+    const userDoc = await db.collection('users').doc(decoded.uid).get();
+    const userData = userDoc.data();
+
     return NextResponse.json({
       uid: decoded.uid,
       email: decoded.email,
-      message: 'User authenticated'
+      fullName: userData?.fullName || '',
+      role: userData?.role || 'candidate',
+      message: 'User authenticated',
     });
   } catch (error: any) {
-return NextResponse.json(
-  { message: 'Invalid or expired token', error: error.message },
-  { status: 403 }
-);
+    return NextResponse.json(
+      { message: 'Invalid or expired token', error: error.message },
+      { status: 403 }
+    );
   }
 }

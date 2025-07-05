@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { db } from '@/app/lib/firebaseAdmin'; // ✅ ADD this
 import { createAuthResponse } from '@/app/lib/setAuthCookie';
 
 export async function POST(req: NextRequest) {
@@ -19,18 +19,23 @@ export async function POST(req: NextRequest) {
     );
 
     const data = await response.json();
-
     if (!response.ok) {
       return new Response(JSON.stringify({ message: data.error?.message || 'Login failed' }), {
         status: 401,
       });
     }
 
+    // ✅ GET full user data from Firestore
+    const userDoc = await db.collection('users').doc(data.localId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+
     return createAuthResponse(data.idToken, {
       message: 'Login successful',
       user: {
         uid: data.localId,
         email: data.email,
+        fullName: userData?.fullName || '',
+        role: userData?.role || 'candidate',
       },
     });
   } catch (error: any) {

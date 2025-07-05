@@ -4,9 +4,9 @@ import { createAuthResponse } from '@/app/lib/setAuthCookie';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { email, password, fullName } = body;
+  const { email, password, fullName, role } = body;
 
-  if (!email || !password || !fullName) {
+  if (!email || !password || !fullName || !role) {
     return new Response(JSON.stringify({ message: 'Missing required fields' }), { status: 400 });
   }
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       email: userRecord.email,
       fullName,
       createdAt: new Date().toISOString(),
-      role: 'candidate',
+      role: role || 'Employee', 
     });
 
     // Auto-login after signup

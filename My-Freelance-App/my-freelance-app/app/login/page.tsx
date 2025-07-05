@@ -21,7 +21,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await res.json();
@@ -30,7 +30,7 @@ export default function LoginPage() {
       toast.success('Login successful');
       router.push('/dashboard');
     } catch (err: any) {
-      toast.error(` ${err.message}`);
+      toast.error(`${err.message}`);
     }
   };
 
@@ -40,6 +40,19 @@ export default function LoginPage() {
       toast.error('Please log in to access that page.');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        toast('⚠️ You are already logged in. Redirecting to your dashboard...', {
+        position: 'top-center',
+      });
+        router.push('/dashboard');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -72,7 +85,6 @@ export default function LoginPage() {
         >
           Login
         </button>
-
       </form>
     </div>
   );

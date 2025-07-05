@@ -1,11 +1,14 @@
-export const getUser = async () => {
+
+export async function getUser() {
   const res = await fetch('/api/auth/me', {
     method: 'GET',
     credentials: 'include',
   });
 
-  const data = await res.json();
+  if (!res.ok) {
+    throw new Error('Unauthorized');
+  }
 
-  if (!res.ok) throw new Error(data.message || 'Unauthorized');
-  return data;
-};
+  const data = await res.json();
+  return data; // now includes: uid, email, fullName, role
+}

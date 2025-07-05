@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -8,6 +8,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('');
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -17,20 +18,32 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, password }),
-        credentials: 'include' // Important for cookies
+        body: JSON.stringify({ fullName, email, password, role }),
+        credentials: 'include',
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
 
-      
       toast.success('Signup successful!');
       router.push('/dashboard');
     } catch (err: any) {
-      toast.error(` ${err.message}`);
+      toast.error(`${err.message}`);
     }
   };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        toast('⚠️ You are already logged in. Redirecting to your dashboard...', {
+          position: 'top-center',
+        });
+        router.push('/dashboard');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -67,14 +80,23 @@ export default function SignupPage() {
           required
         />
 
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="border p-2 w-full"
+          required
+        >
+          <option value="">Select Role</option>
+          <option value="candidate">Candidate</option>
+          <option value="employee">Employee</option>
+        </select>
+
         <button
           type="submit"
           className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 w-full"
         >
           Sign Up
         </button>
-
-       
       </form>
     </div>
   );
